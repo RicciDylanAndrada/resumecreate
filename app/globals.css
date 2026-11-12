@@ -671,3 +671,125 @@ button.more {
   margin-top: 20px;
   background: rgba(255, 255, 255, 0.7);
 }
+
+/* Résumé editor */
+.edit-box {
+  margin-top: 20px;
+  border-radius: 20px;
+  background: var(--field);
+  padding: 4px 16px;
+}
+.edit-box > summary {
+  padding: 14px 0;
+  font-weight: 700;
+  font-size: 1.02rem;
+}
+.editor {
+  padding-bottom: 18px;
+}
+.editor-note {
+  color: var(--soft);
+  font-size: 0.9rem;
+  margin: 0 0 18px !important;
+}
+.editor h3 {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  margin: 26px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--line);
+}
+.heading-input {
+  font: inherit;
+  width: 100%;
+  background: none;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 4px 8px;
+}
+.heading-input:hover {
+  border-color: var(--violet);
+}
+.entry {
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.entry.row {
+  display: grid;
+  gap: 10px;
+}
+.grid {
+  display: grid;
+  gap: 10px;
+}
+@media (min-width: 560px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .entry.row {
+    grid-template-columns: 1fr 2fr auto;
+    align-items: end;
+  }
+}
+.field {
+  display: block;
+  margin: 0;
+}
+.field > span {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--soft);
+  margin-bottom: 4px;
+}
+.field input,
+.field textarea {
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 0.95rem;
+  background: var(--field);
+}
+.entry .field input,
+.entry .field textarea {
+  background: #f6f7ff;
+}
+textarea.bullets {
+  min-height: 0;
+  line-height: 1.45;
+}
+.entry-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+.entry-tools .quiet {
+  min-height: 34px;
+  padding: 2px 8px;
+  font-size: 0.85rem;
+}
+.entry.row .entry-tools {
+  margin: 0;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--violet);
+}
+button.add {
+  width: 100%;
+  border-style: dashed;
+  background: none;
+  font-weight: 600;
+  color: var(--violet-deep);
+  min-height: 44px;
+}

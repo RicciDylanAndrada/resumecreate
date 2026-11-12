@@ -25,7 +25,7 @@ draft before you ever see it.
 - **What the posting asks for that your history doesn't show**, listed plainly
   so you know where you're stretching.
 - **The résumé itself**, previewed on the page, with PDF, `.tex` and
-  "Open in Overleaf" buttons, and an editor if you want to tweak the LaTeX.
+  "Open in Overleaf" buttons.
 
 ## Using it
 
@@ -35,6 +35,14 @@ draft before you ever see it.
    skills, contact details. Rough notes are fine. You can also upload résumés
    you already have (PDF, Word, `.tex`, `.txt`).
 3. Press **Build my résumés** and wait. Each job becomes its own card.
+4. Read the preview. To change anything, open **Edit your résumé** and work in
+   plain fields: contact details, roles, bullet points, education, skills. You
+   can reorder or remove any entry, add new ones, and rename the Projects and
+   Skills headings. Press **Update the preview with your edits** to rebuild the
+   PDF, then download it.
+
+LaTeX users can edit the file itself under **Edit the LaTeX directly**. Editing
+a field rebuilds that file, so hand-written LaTeX is replaced.
 
 Your work history is kept in your browser, so it's there next time. Résumé
 cards are not: a refresh clears them.
@@ -68,6 +76,9 @@ cards are not: a refresh clears them.
    and Skills" where an engineer gets "Projects" and "Technical Skills".
 5. `/api/pdf` compiles the `.tex` to a PDF, which is drawn on the page with
    pdf.js and offered for download.
+6. Edits in the form (`app/editor.tsx`) change the résumé data and re-run
+   `renderJake` in the browser, so only the PDF compile goes back to the
+   server.
 
 Everything is per-request. Nothing you type, upload or generate is stored on
 the server.

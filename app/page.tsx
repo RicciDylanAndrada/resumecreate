@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ResumeEditor from "./editor";
 import { GATES, MAX_DRAFTS, matchLabel, type Verdict } from "@/lib/gates";
+import { renderJake } from "@/lib/jake";
 import type { Job, ResumeData, UploadedFile } from "@/lib/types";
 
 type Item = {
@@ -18,7 +20,9 @@ type Item = {
   keywords?: string[];
   gaps?: string[];
   name?: string;
+  resume?: ResumeData;
   tex?: string;
+  texEdited?: boolean;
   pdf?: Blob;
   pdfStale?: boolean;
   pdfBusy?: boolean;
@@ -217,8 +221,7 @@ export default function Page() {
         revision = { resume: draft.resume, feedback: verdict.feedback, fabrications: verdict.fabrications };
       }
       if (!best) throw new Error("The résumé couldn't be written. Try again.");
-      const { resume: _unused, ...shown } = best.draft;
-      patch(id, { status: "done", ...shown, verdict: best.verdict, draft: best.n });
+      patch(id, { status: "done", ...best.draft, verdict: best.verdict, draft: best.n });
       void makePdf(id, best.draft.tex);
     } catch (e) {
       patch(id, {
@@ -305,6 +308,12 @@ export default function Page() {
       patch(id, { pdfBusy: false, pdfError: e instanceof Error ? e.message : "The PDF couldn't be made." });
       return null;
     }
+  }
+
+  // A form edit rebuilds the LaTeX from the résumé data, so hand-written
+  // LaTeX changes are replaced.
+  function editResume(id: string, resume: ResumeData) {
+    patch(id, { resume, tex: renderJake(resume), texEdited: false, pdfStale: true, name: resume.name });
   }
 
   async function downloadPdf(item: Item) {
@@ -623,6 +632,13 @@ export default function Page() {
                       </>
                     )}
 
+                    {item.resume && (
+                      <details className="edit-box">
+                        <summary>Edit your résumé</summary>
+                        <ResumeEditor resume={item.resume} onChange={(r) => editResume(item.id, r)} />
+                      </details>
+                    )}
+
                     <p className="sub">Your résumé</p>
                     {item.pdf ? (
                       <PdfPreview pdf={item.pdf} />
@@ -631,7 +647,7 @@ export default function Page() {
                     ) : null}
                     {item.pdfStale && !item.pdfBusy && (
                       <div className="actions">
-                        <button onClick={() => makePdf(item.id, item.tex || "")}>
+                        <button className="main" onClick={() => makePdf(item.id, item.tex || "")}>
                           Update the preview with your edits
                         </button>
                       </div>
@@ -660,12 +676,16 @@ export default function Page() {
                     )}
 
                     <details>
-                      <summary>Edit the LaTeX</summary>
+                      <summary>Edit the LaTeX directly</summary>
+                      <p className="hint">
+                        For LaTeX users. Changing a field above rebuilds this file and replaces anything
+                        you write here.
+                      </p>
                       <textarea
                         aria-label="LaTeX source"
                         className="code"
                         value={item.tex}
-                        onChange={(e) => patch(item.id, { tex: e.target.value, pdfStale: true })}
+                        onChange={(e) => patch(item.id, { tex: e.target.value, texEdited: true, pdfStale: true })}
                         spellCheck={false}
                         autoCapitalize="off"
                         autoCorrect="off"
