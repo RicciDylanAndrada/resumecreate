@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { GATES, MAX_DRAFTS, type Verdict } from "@/lib/gates";
+import { GATES, MAX_DRAFTS, matchLabel, type Verdict } from "@/lib/gates";
 import type { Job, ResumeData, UploadedFile } from "@/lib/types";
 
 type Item = {
@@ -19,6 +19,8 @@ type Item = {
   gaps?: string[];
   name?: string;
   tex?: string;
+  pdf?: Blob;
+  pdfStale?: boolean;
   pdfBusy?: boolean;
   pdfError?: string;
 };
@@ -75,6 +77,71 @@ function downloadBlob(blob: Blob, filename: string) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+// Draws each page of the PDF onto a canvas, so the résumé shows inline on
+// phones as well as desktops (mobile browsers don't embed PDFs reliably).
+function PdfPreview({ pdf }: { pdf: Blob }) {
+  const host = useRef<HTMLDivElement>(null);
+  const [pages, setPages] = useState(0);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+          "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+          import.meta.url
+        ).toString();
+        const doc = await pdfjs.getDocument({ data: await pdf.arrayBuffer() }).promise;
+        const el = host.current;
+        if (!el || cancelled) return;
+        const canvases: HTMLCanvasElement[] = [];
+        for (let n = 1; n <= doc.numPages; n++) {
+          const page = await doc.getPage(n);
+          const base = page.getViewport({ scale: 1 });
+          const scale = Math.min(3, Math.max(1.5, (el.clientWidth / base.width) * (window.devicePixelRatio || 1)));
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement("canvas");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: canvas.getContext("2d")!, viewport }).promise;
+          canvases.push(canvas);
+        }
+        if (cancelled) return;
+        el.replaceChildren(...canvases);
+        setPages(doc.numPages);
+        setFailed(false);
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pdf]);
+
+  if (failed) {
+    return <p className="problem">The preview couldn&apos;t be drawn here. Download the PDF to view it.</p>;
+  }
+  return (
+    <>
+      <div className="preview" ref={host} role="img" aria-label="Preview of your résumé" />
+      {pages > 1 && (
+        <p className="problem">
+          This runs to {pages} pages. Trim a role or a few bullets in the LaTeX to bring it back to one.
+        </p>
+      )}
+      <button
+        className="quiet"
+        onClick={() => window.open(URL.createObjectURL(pdf), "_blank")}
+      >
+        Open full size
+      </button>
+    </>
+  );
 }
 
 export default function Page() {
@@ -149,6 +216,7 @@ export default function Page() {
       if (!best) throw new Error("The résumé couldn't be written. Try again.");
       const { resume: _unused, ...shown } = best.draft;
       patch(id, { status: "done", ...shown, verdict: best.verdict, draft: best.n });
+      void makePdf(id, best.draft.tex);
     } catch (e) {
       patch(id, {
         status: "error",
@@ -217,28 +285,29 @@ export default function Page() {
     setBusy(false);
   }
 
-  async function downloadPdf(item: Item) {
-    if (!item.tex) return;
-    patch(item.id, { pdfBusy: true, pdfError: undefined });
+  // Compile the LaTeX to a PDF for the on-screen preview and the download.
+  async function makePdf(id: string, source: string): Promise<Blob | null> {
+    patch(id, { pdfBusy: true, pdfError: undefined });
     try {
-      const res = await fetch("/api/pdf", {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify({ tex: item.tex }),
-      });
+      const res = await fetch("/api/pdf", { method: "POST", headers: headers(), body: JSON.stringify({ tex: source }) });
       relock(res);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "The PDF couldn't be made.");
       }
-      downloadBlob(await res.blob(), slug(item.name, item.job?.company) + ".pdf");
-      patch(item.id, { pdfBusy: false });
+      const pdf = await res.blob();
+      patch(id, { pdf, pdfStale: false, pdfBusy: false });
+      return pdf;
     } catch (e) {
-      patch(item.id, {
-        pdfBusy: false,
-        pdfError: e instanceof Error ? e.message : "The PDF couldn't be made.",
-      });
+      patch(id, { pdfBusy: false, pdfError: e instanceof Error ? e.message : "The PDF couldn't be made." });
+      return null;
     }
+  }
+
+  async function downloadPdf(item: Item) {
+    if (!item.tex) return;
+    const pdf = item.pdf && !item.pdfStale ? item.pdf : await makePdf(item.id, item.tex);
+    if (pdf) downloadBlob(pdf, slug(item.name, item.job?.company) + ".pdf");
   }
 
   function openInOverleaf(source: string) {
@@ -458,10 +527,27 @@ export default function Page() {
 
                     {item.verdict && (
                       <>
+                        <div className="match">
+                          <div className="match-top">
+                            <span>Match with this job</span>
+                            <strong>
+                              {item.verdict.scores.match}% <em>{matchLabel(item.verdict.scores.match)}</em>
+                            </strong>
+                          </div>
+                          <div className="bar" aria-hidden="true">
+                            <i style={{ width: `${item.verdict.scores.match}%` }} />
+                          </div>
+                          <p>
+                            {item.verdict.scores.match >= 75
+                              ? "Your history lines up well with what this posting asks for."
+                              : "You don't need to tick every box to apply. This shows how much of the posting your real history covers; nothing was added to raise it."}
+                          </p>
+                        </div>
+
                         <p className={item.verdict.pass ? "banner good" : "banner bad"}>
                           {item.verdict.pass
-                            ? `Passed all four checks on draft ${item.draft}`
-                            : `Didn't pass every check after ${MAX_DRAFTS} drafts. This is the closest one, so review it before you use it.`}
+                            ? `Passed all three quality checks on draft ${item.draft}`
+                            : `Didn't pass every quality check after ${MAX_DRAFTS} drafts. This is the closest one, so review it before you use it.`}
                         </p>
                         <ul className="gates">
                           {GATES.map((g) => {
@@ -525,6 +611,20 @@ export default function Page() {
                       </>
                     )}
 
+                    <p className="sub">Your résumé</p>
+                    {item.pdf ? (
+                      <PdfPreview pdf={item.pdf} />
+                    ) : item.pdfBusy ? (
+                      <p className="working">Turning the LaTeX into a PDF</p>
+                    ) : null}
+                    {item.pdfStale && !item.pdfBusy && (
+                      <div className="actions">
+                        <button onClick={() => makePdf(item.id, item.tex || "")}>
+                          Update the preview with your edits
+                        </button>
+                      </div>
+                    )}
+
                     <div className="actions">
                       <button className="main" onClick={() => downloadPdf(item)} disabled={item.pdfBusy}>
                         {item.pdfBusy ? "Making PDF…" : "Download PDF"}
@@ -553,7 +653,7 @@ export default function Page() {
                         aria-label="LaTeX source"
                         className="code"
                         value={item.tex}
-                        onChange={(e) => patch(item.id, { tex: e.target.value })}
+                        onChange={(e) => patch(item.id, { tex: e.target.value, pdfStale: true })}
                         spellCheck={false}
                         autoCapitalize="off"
                         autoCorrect="off"

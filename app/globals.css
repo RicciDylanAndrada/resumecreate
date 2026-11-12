@@ -447,6 +447,63 @@ button.quiet {
   margin: 12px 0 0 !important;
 }
 
+.match {
+  margin-top: 18px;
+  padding: 16px 18px 14px;
+  border-radius: 20px;
+  background: var(--tint);
+}
+.match-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-weight: 700;
+}
+.match-top strong {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  color: var(--violet-deep);
+  white-space: nowrap;
+}
+.match-top em {
+  font-family: var(--body);
+  font-style: normal;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-left: 4px;
+}
+.match .bar {
+  background: #fff;
+  height: 12px;
+}
+.match .bar i {
+  background: linear-gradient(90deg, #8f8bff, var(--violet-deep));
+}
+.match p {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  color: var(--soft);
+}
+
+.preview {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 18px;
+  background: #e9ebf7;
+  display: grid;
+  gap: 10px;
+  min-height: 120px;
+}
+.preview canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px -8px rgba(30, 35, 64, 0.35);
+}
+
 .tags {
   list-style: none;
   display: flex;

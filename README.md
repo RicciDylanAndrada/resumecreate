@@ -13,22 +13,24 @@ LaTeX template, downloadable as `.tex` or PDF.
    (PDF, .docx, .tex, .txt) to Claude. It identifies the profession, picks what
    to emphasize, and returns structured résumé data. It is told to use only
    facts you supplied and to list missing requirements as gaps.
-3. `/api/judge` scores each draft against four gates set in `lib/gates.ts`:
-   job match, truthfulness, XYZ/PAR bullets, clarity and length.
+3. `/api/judge` scores each draft (`lib/gates.ts`):
+   - **Match with the job** is shown as a percentage and never blocks. People
+     can apply to jobs they only partly match, and nothing is added to the
+     résumé to raise it.
+   - **Three quality gates** do block: truthful to your history, XYZ/PAR
+     bullets, clarity and length. A failed draft is rewritten with the
+     findings, up to 4 drafts; if none passes, the closest one is shown with
+     its failed gates.
    - With `TYPESAFE_API_KEY` set, [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev)
-     scores the gates (`lib/jev.ts`): three 5-level score questions and three
-     true/false truth checks, the weakest of which decides the truth gate.
-     Minimums: 75, 90, 75, 75.
-   - Claude also reviews every draft, lists any claim it can't find in your
-     material, and writes the fixes for the next draft (Jev returns no text).
-     Any unsupported claim fails the truth gate. Without a TypeSafe key, or
-     if Jev can't be reached, Claude's own scores are used (minimums 80, 100,
-     80, 75).
-   - A failed draft is rewritten with the findings, up to 4 drafts. If none
-     passes, the closest draft is shown with its failed gates.
+     gives the scores (`lib/jev.ts`; gate minimums 90, 75, 75). Claude also
+     reviews every draft, lists any claim it can't find in your material and
+     writes the fixes, since Jev returns no text. Any unsupported claim fails
+     the truth gate. Without a TypeSafe key, or if Jev can't be reached,
+     Claude's own scores are used (minimums 100, 80, 75).
 4. `lib/jake.ts` turns that data into LaTeX with Jake's template, escaping
    special characters so the file always compiles.
-5. `/api/pdf` compiles the `.tex` to PDF through a LaTeX-on-HTTP service
+5. `/api/pdf` compiles the `.tex` to PDF, which is drawn on the page for
+   review (pdf.js) and offered for download. It uses a LaTeX-on-HTTP service
    (Vercel functions can't run TeX themselves).
 
 ## Deploy on Vercel

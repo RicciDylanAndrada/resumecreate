@@ -10,13 +10,13 @@ const QUESTIONS = {
   match: {
     type: "score",
     instructions:
-      "How well resume_draft presents this candidate for job_posting, counting only requirements that candidate_source supports. Requirements the candidate's history does not show should not lower the level.",
+      "How much of what job_posting asks for (skills, tools, experience, responsibilities) is shown in resume_draft.",
     criteria: [
-      "The résumé is generic and ignores what the posting asks for",
-      "A few relevant points appear, but the posting's main requirements that the candidate meets are buried or missing",
-      "Most supported requirements appear, but not prominently or not in the posting's vocabulary",
-      "Supported requirements are shown clearly in the posting's vocabulary, with small ordering or emphasis problems",
-      "Every supported requirement is shown prominently, most relevant experience first, irrelevant material trimmed",
+      "The résumé shows almost none of what the posting asks for",
+      "A few of the posting's requirements appear; most of the core ones are missing",
+      "About half of the posting's core requirements are shown",
+      "Most core requirements are shown; a few are missing or only touched on",
+      "Nearly every core requirement in the posting is clearly shown",
     ],
   },
   bullets: {

@@ -42,9 +42,10 @@ function link(raw: string | undefined, prefix = ""): string {
 }
 
 const PREAMBLE = String.raw`%-------------------------
-% Resume in LaTeX
-% Template: Jake's Resume by Jake Gutierrez (MIT License)
-% https://github.com/jakegut/resume
+% Resume in Latex
+% Author : Jake Gutierrez
+% Based off of: https://github.com/sb2nov/resume
+% License : MIT
 %------------------------
 
 \documentclass[letterpaper,11pt]{article}
@@ -102,6 +103,13 @@ const PREAMBLE = String.raw`%-------------------------
     \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
       \textbf{#1} & #2 \\
       \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
     \end{tabular*}\vspace{-7pt}
 }
 

@@ -11,11 +11,11 @@ const SYSTEM = `You are an independent reviewer scoring a résumé draft against
 
 Score four criteria from 0 to 100. For each, follow the evaluation steps, then give the score.
 
-match: how well the draft presents this candidate for this posting.
-  1. List the posting's most important requirements, skills and responsibilities.
-  2. For each one the candidate's source material supports, check that the draft shows it prominently and in the posting's vocabulary.
-  3. Check that the most relevant experience comes first and irrelevant material is trimmed.
-  Do not lower this score for requirements the candidate's material simply does not support; leaving those out is correct.
+match: how much of what the posting asks for the draft actually shows.
+  1. List the posting's core requirements, skills, tools and responsibilities.
+  2. Count how many the draft clearly shows.
+  3. Score the share honestly: 100 when nearly all are shown, 50 when about half are, near 0 when almost none are.
+  A low match is acceptable. People apply to jobs they only partly match, so this score never needs fixing: give no feedback asking the writer to cover requirements the candidate's material does not support.
 
 truth: whether every claim in the draft is supported by the candidate's source material.
   1. Go through every employer, title, date, degree, tool, skill, number and achievement in the draft.
@@ -112,7 +112,10 @@ export async function POST(req: Request) {
     const scores =
       jevResult ||
       (Object.fromEntries(
-        GATES.map((g) => [g.key, Math.max(0, Math.min(100, Math.round(Number(raw[g.key]) || 0)))])
+        (["match", ...GATES.map((g) => g.key)] as const).map((k) => [
+          k,
+          Math.max(0, Math.min(100, Math.round(Number(raw[k]) || 0))),
+        ])
       ) as Scores);
     const mins = minsFor(judge);
     const fabrications = (raw.fabrications || []).filter(Boolean);
