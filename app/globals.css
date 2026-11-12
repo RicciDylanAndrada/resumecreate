@@ -542,3 +542,54 @@ footer {
 footer a {
   color: inherit;
 }
+
+/* Lock screen */
+.lock {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+}
+.lock-card {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+.lock-card .brand {
+  background: var(--tint);
+  box-shadow: none;
+  padding: 5px 14px;
+  margin-top: 8px;
+}
+.lock-card h1 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 16px 0 8px;
+}
+.lock-card p {
+  color: var(--soft);
+  margin: 0 0 22px;
+}
+.lock-card .problem {
+  color: var(--coral);
+  margin: 12px 0 0;
+  text-align: left;
+}
+.lock-card label {
+  text-align: left;
+}
+.lock-card input {
+  text-align: center;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+}
+.lock-card button.primary {
+  margin-top: 18px;
+}
+.lock-card > svg {
+  display: block;
+  margin: 0 auto 4px;
+}

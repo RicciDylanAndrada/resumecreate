@@ -5,6 +5,8 @@ import type { Job } from "@/lib/types";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
+const JOBS_URL = process.env.LINKEDIN_JOBS_URL || "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting";
+
 function linkedInJobId(raw: string): string | null {
   let url: URL;
   try {
@@ -22,7 +24,7 @@ function linkedInJobId(raw: string): string | null {
 }
 
 export async function POST(req: Request) {
-  const no = denied(req);
+  const no = await denied(req);
   if (no) return no;
 
   const { url } = (await req.json().catch(() => ({}))) as { url?: string };
@@ -39,7 +41,7 @@ export async function POST(req: Request) {
 
   let html: string;
   try {
-    const res = await fetch(`https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${id}`, {
+    const res = await fetch(`${JOBS_URL}/${id}`, {
       headers: {
         "user-agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",

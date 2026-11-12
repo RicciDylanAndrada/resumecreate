@@ -102,25 +102,43 @@ export function sourceText(job: Job, background: string): string {
   ].join("\n");
 }
 
-type Tool = { name: string; description: string; input_schema: unknown };
+type Schema = { [key: string]: unknown };
 
-// Calls Claude and forces the answer through one tool, so the reply is
-// always structured data.
-export async function callTool<T>(system: string, content: Block[], tool: Tool, maxTokens: number): Promise<T> {
+// Structured outputs need every object closed (additionalProperties: false),
+// and work best with every property required. Numeric range keywords are
+// not supported, so they are dropped here and enforced in code.
+function strict(schema: Schema): Schema {
+  const out: Schema = { ...schema };
+  delete out.minimum;
+  delete out.maximum;
+  if (out.type === "object" && out.properties) {
+    const props = out.properties as Record<string, Schema>;
+    out.properties = Object.fromEntries(Object.entries(props).map(([k, v]) => [k, strict(v)]));
+    out.required = Object.keys(props);
+    out.additionalProperties = false;
+  }
+  if (out.type === "array" && out.items) out.items = strict(out.items as Schema);
+  return out;
+}
+
+// Calls Claude and gets back JSON matching the schema (structured outputs).
+// Current Claude models reject forced tool choice, so the schema is passed
+// as output_config.format and the JSON arrives in the text block.
+export async function callJson<T>(system: string, content: Block[], schema: Schema, maxTokens: number): Promise<T> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
     throw new UserError("The site owner hasn't set ANTHROPIC_API_KEY in the Vercel project settings yet.", 500);
   }
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const base = process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com";
+  const res = await fetch(`${base}/v1/messages`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
       model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
       max_tokens: maxTokens,
       system,
-      tools: [tool],
-      tool_choice: { type: "tool", name: tool.name },
       messages: [{ role: "user", content }],
+      output_config: { format: { type: "json_schema", schema: strict(schema) } },
     }),
   });
   if (!res.ok) {
@@ -134,9 +152,18 @@ export async function callTool<T>(system: string, content: Block[], tool: Tool, 
     throw new UserError(message, 502);
   }
   const data = await res.json();
-  const call = (data.content || []).find((b: { type: string }) => b.type === "tool_use");
-  if (!call?.input) throw new UserError("The reply came back incomplete. Try again.", 502);
-  return call.input as T;
+  if (data.stop_reason === "max_tokens") {
+    throw new UserError("The reply was cut off before it finished. Try again with a shorter work history.", 502);
+  }
+  if (data.stop_reason === "refusal") {
+    throw new UserError("The model declined to write this one. Check the job description and try again.", 502);
+  }
+  const text = (data.content || []).find((b: { type: string }) => b.type === "text")?.text;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new UserError("The reply came back incomplete. Try again.", 502);
+  }
 }
 
 export function errorResponse(e: unknown): Response {

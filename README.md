@@ -39,8 +39,8 @@ LaTeX template, downloadable as `.tex` or PDF.
 3. Under **Environment Variables** add:
    - `ANTHROPIC_API_KEY` (required), from console.anthropic.com
    - `TYPESAFE_API_KEY` (optional): turns on Jev as the gate scorer
-   - `ACCESS_CODE` (recommended): visitors must enter it under Settings, so
-     strangers can't spend your API credits
+   - `ACCESS_CODE` (recommended): visitors get a lock screen and must enter
+     it before any page or API loads, so strangers can't spend your credits
    - `ANTHROPIC_MODEL` (optional, default `claude-sonnet-5-5`)
    - `LATEX_COMPILE_URL` (optional, default `https://latex.ytotech.com/builds/sync`)
 4. Deploy.
@@ -57,7 +57,7 @@ npm run dev
 
 ## Notes
 
-- The writer and judge routes ask for up to 120 seconds (`maxDuration`). That
+- The writer and judge routes ask for up to 300 seconds (`maxDuration`). That
   needs Fluid Compute, which is on by default for new Vercel projects.
 - Uploads are capped at 3 MB together (Vercel limits request bodies to 4.5 MB).
 - Nothing is stored on the server. Work history is remembered in the browser only.

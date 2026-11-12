@@ -9,7 +9,7 @@ export const maxDuration = 60;
 const COMPILE_URL = process.env.LATEX_COMPILE_URL || "https://latex.ytotech.com/builds/sync";
 
 export async function POST(req: Request) {
-  const no = denied(req);
+  const no = await denied(req);
   if (no) return no;
 
   const { tex } = (await req.json().catch(() => ({}))) as { tex?: string };

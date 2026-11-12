@@ -82,7 +82,6 @@ export default function Page() {
   const [pasted, setPasted] = useState("");
   const [background, setBackground] = useState("");
   const [files, setFiles] = useState<(UploadedFile & { size: number })[]>([]);
-  const [accessCode, setAccessCode] = useState("");
   const [formError, setFormError] = useState("");
   const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
@@ -90,16 +89,17 @@ export default function Page() {
 
   useEffect(() => {
     setBackground(load("rm.background"));
-    setAccessCode(load("rm.code"));
   }, []);
 
   const patch = (id: string, change: Partial<Item>) =>
     setItems((list) => list.map((it) => (it.id === id ? { ...it, ...change } : it)));
 
-  const headers = () => ({
-    "content-type": "application/json",
-    ...(accessCode ? { "x-access-code": accessCode } : {}),
-  });
+  const headers = () => ({ "content-type": "application/json" });
+
+  // The lock screen cookie expired or was cleared: send them back to it.
+  const relock = (res: Response) => {
+    if (res.status === 401) window.location.href = "/unlock";
+  };
 
   async function addFiles(picked: FileList | null) {
     if (!picked) return;
@@ -119,6 +119,7 @@ export default function Page() {
 
   async function post(path: string, body: unknown) {
     const res = await fetch(path, { method: "POST", headers: headers(), body: JSON.stringify(body) });
+    relock(res);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Something went wrong. Try again.");
     return data;
@@ -165,10 +166,11 @@ export default function Page() {
         headers: headers(),
         body: JSON.stringify({ url: item.url }),
       });
+      relock(res);
       const data = await res.json();
       if (!res.ok) {
         patch(item.id, {
-          status: data.needsCode ? "error" : "needs-paste",
+          status: "needs-paste",
           error: data.error || "This link couldn't be read.",
         });
         return;
@@ -194,7 +196,6 @@ export default function Page() {
       return;
     }
     save("rm.background", background);
-    save("rm.code", accessCode);
 
     const fresh: Item[] = urls.map((url) => ({
       id: `j${++counter.current}`,
@@ -225,6 +226,7 @@ export default function Page() {
         headers: headers(),
         body: JSON.stringify({ tex: item.tex }),
       });
+      relock(res);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "The PDF couldn't be made.");
@@ -355,18 +357,6 @@ export default function Page() {
               ))}
             </ul>
           )}
-
-          <details>
-            <summary>Settings</summary>
-            <label htmlFor="code">Access code, if the site owner set one</label>
-            <input
-              id="code"
-              type="password"
-              value={accessCode}
-              onChange={(e) => setAccessCode(e.target.value)}
-              autoComplete="off"
-            />
-          </details>
 
           {formError && (
             <p className="problem" role="alert">
