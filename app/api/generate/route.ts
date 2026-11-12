@@ -20,7 +20,9 @@ Rules:
 - Past tense for past roles, present tense for a current role, one to two lines per bullet, no first person, no filler such as "responsible for" or "worked on".
 - If you are given a reviewer's findings on an earlier draft, fix every one of them. Delete anything the reviewer could not trace to the candidate's material; do not reword it and keep it.
 - Fit one page: at most 4 roles, 3 to 5 bullets for recent roles, 2 to 3 for older ones, up to 3 projects and only if relevant, up to 4 skill rows.
-- Skill categories should suit the profession ("Languages", "Frameworks" for engineers; "Clinical", "Certifications" for nurses; and so on).
+- Skill categories should suit the profession ("Languages", "Frameworks" for engineers; "Clinical skills", "Certifications" for nurses; "Markets", "Tools" for marketers; and so on).
+- Name the two flexible sections to suit the profession. skillsHeading is the heading over the skill rows: "Technical Skills" for engineering, "Licenses and Skills" for nursing and other licensed work, plain "Skills" when neither fits. projectsHeading is the heading over the projects section: "Projects" for engineering, "Clinical Experience" for nursing rotations, "Selected Work" or similar elsewhere. Leave the projects list empty when the profession has nothing of that kind.
+- For licensed professions, put the licences and certifications the candidate actually holds first among the skill rows, since employers screen on them.
 - Set educationFirst to true only for students or graduates with under about two years of experience.
 - Plain text only in every field: no LaTeX, no markdown, no emoji.
 - Every field must be present. Use an empty string (or an empty list) for anything the candidate did not supply; never fill a blank with a guess.
@@ -55,6 +57,8 @@ const SCHEMA = {
           github: { type: "string" },
           website: { type: "string" },
           educationFirst: { type: "boolean" },
+          projectsHeading: { type: "string", description: "Heading for the projects section, suited to the profession" },
+          skillsHeading: { type: "string", description: "Heading for the skills section, suited to the profession" },
           education: {
             type: "array",
             items: {

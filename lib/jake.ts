@@ -194,7 +194,7 @@ function experience(r: ResumeData): string {
 function projects(r: ResumeData): string {
   if (!r.projects?.length) return "";
   return [
-    "\\section{Projects}",
+    `\\section{${tex(r.projectsHeading) || "Projects"}}`,
     "  \\resumeSubHeadingListStart",
     ...r.projects.map((p) => {
       const title = `\\textbf{${tex(p.name)}}` + (p.tech ? ` $|$ \\emph{${tex(p.tech)}}` : "");
@@ -212,7 +212,7 @@ function skills(r: ResumeData): string {
     .map((s) => `     \\textbf{${tex(s.category)}}{: ${tex(s.items)}}`);
   if (!rows.length) return "";
   return [
-    "\\section{Technical Skills}",
+    `\\section{${tex(r.skillsHeading) || "Technical Skills"}}`,
     " \\begin{itemize}[leftmargin=0.15in, label={}]",
     "    \\small{\\item{",
     rows.join(" \\\\\n"),

@@ -14,6 +14,8 @@ export type ResumeData = {
   github?: string;
   website?: string;
   educationFirst?: boolean;
+  projectsHeading?: string;
+  skillsHeading?: string;
   education: { school: string; location?: string; degree: string; dates?: string }[];
   experience: {
     title: string;
