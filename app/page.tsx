@@ -153,6 +153,9 @@ export default function Page() {
   const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const counter = useRef(0);
+  // Newest résumés first, a page at a time, so a long session stays short.
+  const PAGE = 5;
+  const [shown, setShown] = useState(PAGE);
 
   useEffect(() => {
     setBackground(load("rm.background"));
@@ -457,13 +460,22 @@ export default function Page() {
             </div>
           )}
 
-          {items.map((item) => {
+          {items.slice(0, shown).map((item) => {
             const heading =
               [item.job?.title, item.job?.company].filter(Boolean).join(" at ") ||
               (item.url ? "LinkedIn job" : "Pasted job description");
             return (
               <article className="sheet result" key={item.id}>
-                <h2>{heading}</h2>
+                <div className="card-top">
+                  <h2>{heading}</h2>
+                  <button
+                    className="quiet"
+                    aria-label={`Remove ${heading}`}
+                    onClick={() => setItems((list) => list.filter((it) => it.id !== item.id))}
+                  >
+                    Remove
+                  </button>
+                </div>
                 {item.url && <p className="where">{item.url}</p>}
 
                 {item.status === "reading" && <p className="working">Reading the job posting</p>}
@@ -664,6 +676,11 @@ export default function Page() {
               </article>
             );
           })}
+          {items.length > shown && (
+            <button className="more" onClick={() => setShown(shown + PAGE)}>
+              Show {Math.min(PAGE, items.length - shown)} older ({items.length - shown} hidden)
+            </button>
+          )}
         </section>
       </div>
 
